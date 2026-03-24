@@ -1,0 +1,25 @@
+# Model weights
+*.h5
+*.pt
+*.pth
+*.pkl
+*.onnx
+*.bin
+
+# Songs / media
+Songs/
+Images/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+
+# Node
+node_modules/
+
+# Misc
+Thumbs.db
+.DS_Store
