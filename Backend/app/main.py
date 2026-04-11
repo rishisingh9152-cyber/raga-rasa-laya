@@ -1,33 +1,46 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from app.routes import songs
-from app.routes import test, emotion, recommendation, rating
 
-app = FastAPI()
+# Initialize FastAPI app
+app = FastAPI(
+    title="Raga-Rasa Soul API",
+    description="Music therapy with emotion detection",
+    version="1.0.0"
+)
 
-# 🔥 MOVE THIS TO TOP (BEFORE ANYTHING ELSE)
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # 👈 more reliable than "*"
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(songs.router)
-# 🔥 THEN MOUNT
-app.mount(
-    "/songs",
-    StaticFiles(directory=r"C:\Users\rishi\OneDrive\Desktop\AI MUSIC PLAYER\Songs"),
-    name="songs"
-)
 
-# 🔥 THEN ROUTES
-app.include_router(test.router)
-app.include_router(emotion.router)
-app.include_router(recommendation.router)
-app.include_router(rating.router)
+# Health check endpoint
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "service": "Raga-Rasa Soul API",
+        "version": "1.0.0"
+    }
 
+# Root endpoint
 @app.get("/")
-def home():
-    return {"message": "Backend is running"}
+async def root():
+    return {
+        "message": "Raga-Rasa Soul API is running",
+        "status": "ok"
+    }
+
+# Test endpoint
+@app.get("/test")
+async def test():
+    return {"test": "success"}
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
