@@ -1,7 +1,8 @@
 import requests
 import base64
+import os
 
-EMOTION_API_URL = "http://127.0.0.1:5000/detect"
+EMOTION_API_URL = os.getenv("EMOTION_SERVICE_URL", "http://127.0.0.1:5000/detect")
 
 
 def get_emotion(image_bytes):
