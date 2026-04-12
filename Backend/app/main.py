@@ -2,6 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.dropbox_service import init_dropbox_service
+from app.config import CORS_ORIGINS
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -13,10 +14,12 @@ app = FastAPI(
 # Initialize services
 init_dropbox_service()
 
-# Add CORS middleware
+# Add CORS middleware with configuration-based origins
+# Uses config for production, allows all in development
+cors_origins = CORS_ORIGINS if CORS_ORIGINS else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,12 +27,30 @@ app.add_middleware(
 
 # Import and register routes
 try:
+    # Core routes (Priority 1)
     from app.routes import songs_routes, song_management_routes, admin_routes
     app.include_router(songs_routes.router)
     app.include_router(song_management_routes.router)
     app.include_router(admin_routes.router)
+    
+    # Feature routes (Priority 2)
+    from app.routes import emotion, psychometric, session, recommendation, hybrid_recommendation
+    app.include_router(emotion.router)
+    app.include_router(psychometric.router)
+    app.include_router(session.router)
+    app.include_router(recommendation.router)
+    app.include_router(hybrid_recommendation.router)
+    
+    # Optional routes (Priority 3)
+    try:
+        from app.routes import songs, rating
+        app.include_router(songs.router)
+        app.include_router(rating.router)
+    except ImportError as e:
+        print(f"Note: Optional routes not available: {e}")
+        
 except ImportError as e:
-    print(f"Warning: Could not import routes: {e}")
+    print(f"Error: Could not import routes: {e}")
 
 # Health check endpoint
 @app.get("/health")
