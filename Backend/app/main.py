@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.dropbox_service import init_dropbox_service
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -8,6 +9,9 @@ app = FastAPI(
     description="Music therapy with emotion detection",
     version="1.0.0"
 )
+
+# Initialize services
+init_dropbox_service()
 
 # Add CORS middleware
 app.add_middleware(
@@ -17,6 +21,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Import and register routes
+try:
+    from app.routes import songs_routes
+    app.include_router(songs_routes.router)
+except ImportError as e:
+    print(f"Warning: Could not import songs_routes: {e}")
 
 # Health check endpoint
 @app.get("/health")
