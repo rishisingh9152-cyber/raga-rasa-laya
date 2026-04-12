@@ -46,8 +46,25 @@ export const getRecommendations = async (emotion, limit = 5) => {
     
     console.log('✅ Recommendations received:', data);
     
-    // Return recommendations array or empty array
-    return data.recommendations || [];
+    // Handle different response formats:
+    // Format 1: { recommendations: [...] }
+    if (data.recommendations && Array.isArray(data.recommendations)) {
+      return data.recommendations;
+    }
+    
+    // Format 2: { songs: [...] }
+    if (data.songs && Array.isArray(data.songs)) {
+      return data.songs;
+    }
+    
+    // Format 3: Array directly
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    // Fallback: return empty array
+    console.warn('⚠️ Unexpected API response format:', data);
+    return [];
     
   } catch (error) {
     console.error('❌ Error fetching recommendations:', error);

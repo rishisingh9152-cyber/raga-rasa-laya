@@ -15,8 +15,12 @@ function Player({ song, setShowRating, showRating, onLowRating, onNext, onPrev }
 
   if (!song) return null;
 
+  // Get song name with null safety
+  const songName = song.song_name || song.title || 'Unknown Song';
+  
   // Get streaming URL from backend (priority order)
   const streamingUrl = song.streaming_url || song.cloudinary_url || song.file_path;
+  
   
   if (!streamingUrl) {
     return (
@@ -50,7 +54,7 @@ function Player({ song, setShowRating, showRating, onLowRating, onNext, onPrev }
       <h2>🎧 Raga Laya Rasa</h2>
 
       <p style={{ fontSize: "18px" }}>
-        {song.song_name}
+        {songName}
       </p>
 
       <audio controls autoPlay style={{ width: "100%" }}>
