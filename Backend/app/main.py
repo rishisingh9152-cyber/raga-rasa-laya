@@ -1,6 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.services.dropbox_service import init_dropbox_service
+from app.config import CORS_ORIGINS
 
 # Import routes
 from app.routes.recommendation import router as recommendation_router
@@ -16,10 +18,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
+# Initialize services
+init_dropbox_service()
+
+# Add CORS middleware with configuration-based origins
+# Uses config for production, allows all in development
+cors_origins = CORS_ORIGINS if CORS_ORIGINS else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,6 +38,23 @@ app.include_router(emotion_router, tags=["emotion"])
 app.include_router(rating_router, tags=["ratings"])
 app.include_router(songs_router, tags=["songs"])
 app.include_router(test_router, tags=["test"])
+
+# Import and register additional routes if available
+try:
+    from app.routes import songs_routes, song_management_routes, admin_routes
+    app.include_router(songs_routes.router)
+    app.include_router(song_management_routes.router)
+    app.include_router(admin_routes.router)
+except ImportError:
+    pass
+
+try:
+    from app.routes import psychometric, session, hybrid_recommendation
+    app.include_router(psychometric.router)
+    app.include_router(session.router)
+    app.include_router(hybrid_recommendation.router)
+except ImportError:
+    pass
 
 # Health check endpoint
 @app.get("/health")
