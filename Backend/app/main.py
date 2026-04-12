@@ -4,6 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.services.dropbox_service import init_dropbox_service
 from app.config import CORS_ORIGINS
 
+# Import routes
+from app.routes.recommendation import router as recommendation_router
+from app.routes.emotion import router as emotion_router
+from app.routes.rating import router as rating_router
+from app.routes.songs import router as songs_router
+from app.routes.test import router as test_router
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Raga-Rasa Soul API",
@@ -25,32 +32,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import and register routes
+# Register routes
+app.include_router(recommendation_router, tags=["recommendations"])
+app.include_router(emotion_router, tags=["emotion"])
+app.include_router(rating_router, tags=["ratings"])
+app.include_router(songs_router, tags=["songs"])
+app.include_router(test_router, tags=["test"])
+
+# Import and register additional routes if available
 try:
-    # Core routes (Priority 1)
     from app.routes import songs_routes, song_management_routes, admin_routes
     app.include_router(songs_routes.router)
     app.include_router(song_management_routes.router)
     app.include_router(admin_routes.router)
-    
-    # Feature routes (Priority 2)
-    from app.routes import emotion, psychometric, session, recommendation, hybrid_recommendation
-    app.include_router(emotion.router)
+except ImportError:
+    pass
+
+try:
+    from app.routes import psychometric, session, hybrid_recommendation
     app.include_router(psychometric.router)
     app.include_router(session.router)
-    app.include_router(recommendation.router)
     app.include_router(hybrid_recommendation.router)
-    
-    # Optional routes (Priority 3)
-    try:
-        from app.routes import songs, rating
-        app.include_router(songs.router)
-        app.include_router(rating.router)
-    except ImportError as e:
-        print(f"Note: Optional routes not available: {e}")
-        
-except ImportError as e:
-    print(f"Error: Could not import routes: {e}")
+except ImportError:
+    pass
 
 # Health check endpoint
 @app.get("/health")

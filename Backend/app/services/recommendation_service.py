@@ -92,9 +92,15 @@ class RecommendationService:
         # ----------------------------
         response = []
         for s in selected:
+            # Use Cloudinary URL for streaming (primary)
+            # Fall back to file_path if needed
+            streaming_url = s.get("cloudinary_url") or s.get("streaming_url") or s.get("file_path", "")
+            
             response.append({
                 "song_name": s.get("song_name", "Unknown"),
                 "rass": s.get("rass", "unknown"),
+                "streaming_url": streaming_url,
+                "cloudinary_url": s.get("cloudinary_url", ""),
                 "file_path": s.get("file_path", ""),
                 "avg_rating": float(s.get("avg_rating", 0)),
                 "num_users": int(s.get("num_users", 0))

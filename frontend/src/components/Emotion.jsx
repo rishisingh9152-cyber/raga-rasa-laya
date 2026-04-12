@@ -1,47 +1,36 @@
 import React from "react";
+import { getRecommendations } from "../services/api";
 
 function Emotion({ setEmotion, setSongs, setCurrentSong }) {
 
   const detect = async () => {
     try {
-      console.log("🎯 Calling emotion API...");
+      console.log("🎯 Getting recommendations for emotion: happy");
 
-      // 1️⃣ Get emotion
-      const res = await fetch("http://127.0.0.1:8000/emotion/live");
-      const data = await res.json();
-
-      console.log("🧠 Emotion response:", data);
-
-      const emotion = data.emotion;
-
-      // ❌ Handle bad cases
-      if (!emotion || emotion === "no face detected" || emotion === "unknown") {
-        alert("Face not detected properly. Try again.");
-        return;
-      }
+      // For now, hardcoded emotion (in future, integrate with camera/emotion detection)
+      const emotion = "happy";
 
       // ✅ Set emotion
       setEmotion(emotion);
 
-      console.log("🎵 Fetching recommendations for:", emotion);
+      console.log("🎵 Fetching recommendations from API...");
 
-      // ✅ FIXED (template string)
-      const songsRes = await fetch(
-        `http://127.0.0.1:8000/recommendations?emotion=${emotion}`
-      );
+      // ✅ Use API service to get recommendations
+      try {
+        const recommendations = await getRecommendations(emotion, 5);
 
-      const songsData = await songsRes.json();
+        console.log("🎶 Songs response:", recommendations);
 
-      console.log("🎶 Songs response:", songsData);
-
-      const recommendations = songsData?.recommendations || [];
-
-      // 3️⃣ Set songs + play first
-      if (recommendations.length > 0) {
-        setSongs(recommendations);
-        setCurrentSong(recommendations[0]);
-      } else {
-        alert("No recommendations received");
+        // ✅ Set songs + play first
+        if (recommendations.length > 0) {
+          setSongs(recommendations);
+          setCurrentSong(recommendations[0]);
+        } else {
+          alert("No recommendations received. Check console for errors.");
+        }
+      } catch (apiError) {
+        console.error("API Error:", apiError);
+        alert(`Failed to fetch recommendations: ${apiError.message}`);
       }
 
     } catch (error) {
@@ -52,7 +41,15 @@ function Emotion({ setEmotion, setSongs, setCurrentSong }) {
 
   return (
     <div>
-      <button onClick={detect}>
+      <button onClick={detect} style={{
+        padding: "10px 20px",
+        fontSize: "16px",
+        backgroundColor: "#1DB954",
+        color: "white",
+        border: "none",
+        borderRadius: "20px",
+        cursor: "pointer"
+      }}>
         Detect Emotion 🎯
       </button>
     </div>
