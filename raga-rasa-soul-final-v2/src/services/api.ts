@@ -1,4 +1,12 @@
-const BASE_URL = "http://127.0.0.1:8000";
+// API Configuration - supports both local development and production
+// Priority: import.meta.env.VITE_API_URL > process.env.REACT_APP_API_URL > default
+const BASE_URL = 
+  // Vite development/build environment variable
+  (import.meta.env.VITE_API_URL as string) ||
+  // React environment variable (if migrating from CRA)
+  (typeof process !== 'undefined' && process.env.REACT_APP_API_URL) ||
+  // Local development default
+  "http://127.0.0.1:8000";
 
 // ==============================
 // INTERFACES
@@ -71,9 +79,22 @@ export const api = {
   // EMOTION
   // ============================
   async detectEmotion(): Promise<EmotionResponse> {
-    const response = await fetch(`${BASE_URL}/emotion/live`);
-    if (!response.ok) throw new Error("Failed to detect emotion");
-    return response.json();
+    // Try the Render endpoint first (/api/detect-emotion)
+    try {
+      const response = await fetch(`${BASE_URL}/api/detect-emotion`);
+      if (!response.ok) {
+        // Fall back to old endpoint
+        const fallback = await fetch(`${BASE_URL}/emotion/live`);
+        if (!fallback.ok) throw new Error("Failed to detect emotion");
+        return fallback.json();
+      }
+      return response.json();
+    } catch (error) {
+      // Final fallback
+      const response = await fetch(`${BASE_URL}/emotion/live`);
+      if (!response.ok) throw new Error("Failed to detect emotion");
+      return response.json();
+    }
   },
 
   // ============================
@@ -123,17 +144,45 @@ export const api = {
   // SESSIONS
   // ============================
   async createSession(preTestId?: string): Promise<SessionResponse> {
-    const response = await fetch(`${BASE_URL}/sessions/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: "default_user",
-        pre_test_id: preTestId,
-      }),
-    });
+    // Try the Render endpoint first
+    try {
+      const response = await fetch(`${BASE_URL}/api/session/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: "default_user",
+          pre_test_id: preTestId,
+        }),
+      });
 
-    if (!response.ok) throw new Error("Failed to create session");
-    return response.json();
+      if (!response.ok) {
+        // Fall back to old endpoint
+        const fallback = await fetch(`${BASE_URL}/sessions/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: "default_user",
+            pre_test_id: preTestId,
+          }),
+        });
+        if (!fallback.ok) throw new Error("Failed to create session");
+        return fallback.json();
+      }
+      return response.json();
+    } catch (error) {
+      // Final fallback
+      const response = await fetch(`${BASE_URL}/sessions/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: "default_user",
+          pre_test_id: preTestId,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create session");
+      return response.json();
+    }
   },
 
   // ============================
@@ -179,17 +228,34 @@ export const api = {
   },
 
   // ============================
-  // LEGACY (OPTIONAL)
+  // RECOMMENDATIONS
   // ============================
   async getRecommendations(
     emotion: string
   ): Promise<RecommendationResponse> {
-    const response = await fetch(
-      `${BASE_URL}/recommendations?emotion=${emotion}`
-    );
+    // Try the new /api/recommend/live endpoint first (Render backend)
+    try {
+      const response = await fetch(
+        `${BASE_URL}/api/recommend/live?emotion=${emotion}`
+      );
 
-    if (!response.ok) throw new Error("Failed to fetch recommendations");
-    return response.json();
+      if (!response.ok) {
+        // Fall back to old endpoint if new one fails
+        const fallbackResponse = await fetch(
+          `${BASE_URL}/recommendations?emotion=${emotion}`
+        );
+        if (!fallbackResponse.ok) throw new Error("Failed to fetch recommendations");
+        return fallbackResponse.json();
+      }
+      return response.json();
+    } catch (error) {
+      // Final fallback
+      const fallbackResponse = await fetch(
+        `${BASE_URL}/recommendations?emotion=${emotion}`
+      );
+      if (!fallbackResponse.ok) throw new Error("Failed to fetch recommendations");
+      return fallbackResponse.json();
+    }
   },
 
   // ============================
