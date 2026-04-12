@@ -2,6 +2,13 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Import routes
+from app.routes.recommendation import router as recommendation_router
+from app.routes.emotion import router as emotion_router
+from app.routes.rating import router as rating_router
+from app.routes.songs import router as songs_router
+from app.routes.test import router as test_router
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Raga-Rasa Soul API",
@@ -17,6 +24,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register routes
+app.include_router(recommendation_router, tags=["recommendations"])
+app.include_router(emotion_router, tags=["emotion"])
+app.include_router(rating_router, tags=["ratings"])
+app.include_router(songs_router, tags=["songs"])
+app.include_router(test_router, tags=["test"])
 
 # Health check endpoint
 @app.get("/health")
