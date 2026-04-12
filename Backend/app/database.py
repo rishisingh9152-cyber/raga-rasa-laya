@@ -3,7 +3,9 @@ from datetime import datetime
 import os
 
 # Connect to MongoDB
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+# Priority: MONGODB_URI (Render/Atlas) > MONGODB_URL (legacy) > local
+MONGODB_URI = os.getenv("MONGODB_URI", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
+print(f"Connecting to MongoDB: {MONGODB_URI[:50]}..." if MONGODB_URI else "No MongoDB URI")
 client = MongoClient(MONGODB_URI)
 db = client["ai_music"]
 

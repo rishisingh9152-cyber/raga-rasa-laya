@@ -19,7 +19,7 @@ DATA_DIR.mkdir(exist_ok=True)
 DROPBOX_SONGS_MAPPING_PATH = str(DATA_DIR / "dropbox_songs_mapping.json")
 
 # MongoDB Configuration
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+MONGODB_URL = os.getenv("MONGODB_URI", os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
 DATABASE_NAME = "ai_music"
 SONGS_COLLECTION = "songs"
 
