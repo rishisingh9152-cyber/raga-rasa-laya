@@ -24,10 +24,12 @@ app.add_middleware(
 
 # Import and register routes
 try:
-    from app.routes import songs_routes
+    from app.routes import songs_routes, song_management_routes, admin_routes
     app.include_router(songs_routes.router)
+    app.include_router(song_management_routes.router)
+    app.include_router(admin_routes.router)
 except ImportError as e:
-    print(f"Warning: Could not import songs_routes: {e}")
+    print(f"Warning: Could not import routes: {e}")
 
 # Health check endpoint
 @app.get("/health")
