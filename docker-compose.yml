@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: raga_rasa_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root123
+      MONGO_INITDB_DATABASE: raga_rasa
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - raga_rasa_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Emotion Recognition Service (Flask)
+  emotion_service:
+    build:
+      context: ./emotion_recognition
+      dockerfile: Dockerfile
+    container_name: raga_rasa_emotion
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+      FLASK_DEBUG: "1"
+      PORT: 5000
+    volumes:
+      - ./emotion_recognition:/app
+    networks:
+      - raga_rasa_network
+    depends_on:
+      - mongodb
+    healthcheck:
+      test: curl --fail http://localhost:5000/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile.dev
+    container_name: raga_rasa_backend
+    ports:
+      - "8000:8000"
+    environment:
+      EMOTION_SERVICE_URL: http://emotion_service:5000/detect
+      MONGODB_URI: mongodb://root:root123@mongodb:27017/raga_rasa?authSource=admin
+      API_BASE_URL: http://localhost:8000
+      PORT: 8000
+      DEBUG_MODE: "true"
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./Backend:/app
+    networks:
+      - raga_rasa_network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      emotion_service:
+        condition: service_healthy
+    healthcheck:
+      test: curl --fail http://localhost:8000/health || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Frontend (React + Vite)
+  frontend:
+    build:
+      context: ./raga-rasa-soul-final-v2
+      dockerfile: Dockerfile.dev
+    container_name: raga_rasa_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_APP_NAME: RagaRasa Music Therapy
+      VITE_ENV: development
+    volumes:
+      - ./raga-rasa-soul-final-v2:/app
+      - /app/node_modules
+    networks:
+      - raga_rasa_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  raga_rasa_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
