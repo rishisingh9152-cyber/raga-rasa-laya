@@ -2,7 +2,15 @@ import os
 from datetime import datetime
 from fastapi import APIRouter
 
-from app.services.emotion_client import get_emotion
+# Try to import from emotion_client first (new pattern)
+# Fall back to emotion service if it exists (backward compatibility)
+try:
+    from app.services.emotion_client import get_emotion
+except ImportError:
+    # Fallback for older deployments
+    from app.services.emotion import get_emotion_detector
+    get_emotion = lambda img: get_emotion_detector()(img)
+
 from app.database import images_collection
 
 router = APIRouter()
