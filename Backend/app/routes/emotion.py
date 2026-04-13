@@ -1,4 +1,3 @@
-import cv2
 import os
 from datetime import datetime
 from fastapi import APIRouter
@@ -13,6 +12,8 @@ BASE_DIR = os.path.join("app", "storage", "images")
 
 @router.get("/emotion/live")
 def detect_from_camera():
+    # Lazy-load cv2 to avoid import errors in headless environments
+    import cv2
 
     # Initialize camera
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
